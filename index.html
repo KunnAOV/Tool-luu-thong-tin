@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Lưu File XML</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        form {
+            max-width: 400px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        input, select, button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align: center;">Tool Lưu Thông Tin vào XML</h2>
+    <form id="accountForm">
+        <label for="platform">Chọn nền tảng:</label>
+        <select id="platform" required>
+            <option value="Facebook">Facebook</option>
+            <option value="Google">Google</option>
+            <option value="Twitter">Twitter</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Other">Khác</option>
+        </select>
+
+        <label for="username">Tài khoản:</label>
+        <input type="text" id="username" placeholder="Nhập tài khoản" required>
+
+        <label for="password">Mật khẩu:</label>
+        <input type="password" id="password" placeholder="Nhập mật khẩu" required>
+
+        <button type="button" onclick="saveToXML()">Lưu</button>
+    </form>
+
+    <script>
+        let fileHandle; // Biến lưu file handle
+
+        async function saveToXML() {
+            const platform = document.getElementById("platform").value;
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            if (!username || !password) {
+                alert("Vui lòng điền đầy đủ thông tin!");
+                return;
+            }
+
+            const newAccount = `
+  <Account>
+    <Platform>${platform}</Platform>
+    <Username>${username}</Username>
+    <Password>${password}</Password>
+  </Account>`;
+
+            try {
+                // Nếu chưa chọn file, yêu cầu người dùng chọn
+                if (!fileHandle) {
+                    fileHandle = await window.showSaveFilePicker({
+                        suggestedName: "thongtin.xml",
+                        types: [
+                            {
+                                description: "XML Files",
+                                accept: { "application/xml": [".xml"] },
+                            },
+                        ],
+                    });
+                }
+
+                // Đọc file hiện tại
+                let fileContent = "";
+                try {
+                    const file = await fileHandle.getFile();
+                    fileContent = await file.text();
+                } catch (error) {
+                    // Nếu file rỗng hoặc không tồn tại, khởi tạo nội dung
+                    fileContent = `<?xml version="1.0" encoding="UTF-8"?>\n<Accounts>\n</Accounts>`;
+                }
+
+                // Thêm nội dung mới
+                const updatedContent = fileContent.replace(
+                    /<\/Accounts>/,
+                    `${newAccount}\n</Accounts>`
+                );
+
+                // Ghi lại file
+                const writable = await fileHandle.createWritable();
+                await writable.write(updatedContent);
+                await writable.close();
+
+                alert("Lưu thông tin thành công!");
+                document.getElementById("accountForm").reset();
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Đã xảy ra lỗi khi lưu file. Vui lòng thử lại.");
+            }
+        }
+    </script>
+</body>
+</html>
